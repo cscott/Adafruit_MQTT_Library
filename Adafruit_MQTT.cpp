@@ -227,6 +227,11 @@ uint16_t Adafruit_MQTT::processPacketsUntil(uint8_t *buffer,
                                             uint16_t timeout) {
   uint16_t len;
 
+  if (timeout == 0) {
+      // enforce a minimum timeout in order to get the packet we're waiting for
+      timeout = PACKET_TIMEOUT_MS;
+  }
+
   while (true) {
     len = readFullPacket(buffer, MAXBUFFERSIZE, timeout);
 
@@ -259,6 +264,10 @@ uint16_t Adafruit_MQTT::readFullPacket(uint8_t *buffer, uint16_t maxsize,
   rlen = readPacket(pbuff, 1, timeout);
   if (rlen != 1)
     return 0;
+  if (timeout == 0) {
+    // Once we've got a packet, increase the timeout to get the whole thing
+    timeout = PACKET_TIMEOUT_MS;
+  }
 
   DEBUG_PRINT(F("Packet Type:\t"));
   DEBUG_PRINTBUFFER(pbuff, rlen);
@@ -476,7 +485,7 @@ void Adafruit_MQTT::processPackets(int16_t timeout) {
 
   uint32_t elapsed = 0, endtime, starttime = millis();
 
-  while (elapsed < (uint32_t)timeout) {
+  do {
     Adafruit_MQTT_Subscribe *sub = readSubscription(timeout - elapsed);
     if (sub) {
       if (sub->callback_uint32t != NULL) {
@@ -498,15 +507,15 @@ void Adafruit_MQTT::processPackets(int16_t timeout) {
                                               sub->datalen);
       }
     }
-
     // keep track over elapsed time
     endtime = millis();
     if (endtime < starttime) {
-      starttime = endtime; // looped around!")
+      starttime = endtime; // looped around!
     }
     elapsed += (endtime - starttime);
-  }
+  } while (elapsed < (uint32_t)timeout);
 }
+
 Adafruit_MQTT_Subscribe *Adafruit_MQTT::readSubscription(int16_t timeout) {
 
   // Sync or Async subscriber with message

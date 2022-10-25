@@ -53,7 +53,7 @@ uint16_t Adafruit_MQTT_Client::readPacket(uint8_t *buffer, uint16_t maxlen,
   /* Read data until either the connection is closed, or the idle timeout is
    * reached. */
   uint16_t len = 0;
-  int16_t t = timeout;
+  int16_t t = timeout > 0 ? timeout : PACKET_TIMEOUT_MS;
 
   if (maxlen == 0) { // handle zero-length packets
     return 0;
@@ -74,6 +74,10 @@ uint16_t Adafruit_MQTT_Client::readPacket(uint8_t *buffer, uint16_t maxlen,
         DEBUG_PRINTBUFFER(buffer, len);
         return len;
       }
+    }
+    if (timeout == 0 && len == 0) {
+        // Ensure that "non blocking" reads don't incur a delay
+        break;
     }
     timeout -= MQTT_CLIENT_READINTERVAL_MS;
     delay(MQTT_CLIENT_READINTERVAL_MS);

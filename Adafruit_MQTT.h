@@ -100,6 +100,7 @@
 #define PUBLISH_TIMEOUT_MS 500
 #define PING_TIMEOUT_MS 500
 #define SUBACK_TIMEOUT_MS 500
+#define PACKET_TIMEOUT_MS 100
 
 // Adjust as necessary, in seconds.  Default to 5 minutes.
 #define MQTT_CONN_KEEPALIVE 300
@@ -213,7 +214,7 @@ public:
   // appropriate callback
   Adafruit_MQTT_Subscribe *handleSubscriptionPacket(uint16_t len);
 
-  void processPackets(int16_t timeout);
+  void processPackets(int16_t timeout = 0);
 
   // Ping the server to ensure the connection is still alive.
   bool ping(uint8_t n = 1);
